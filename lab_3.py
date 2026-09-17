@@ -7,43 +7,44 @@ airlines = ["SAS","Norwegian","Iberia","British Airways","Ryanair","SAS","Norweg
 capacities = [72, 180, 180, 180, 189, 180, 180, 180, 180, 174]
 terminals = ["A", "B", "C"]
 gates = ["1", "2", "3", "4"]
-#Function that generates a random schedule and returns it sorted by departure times
 menu = ["All Departures","Delayed Departures","Cancelled Departures",
         "Search","Statistics","Quit"]
-def generate_schedule(flights, airls, dests, caps, terms, gs):
+#Function that generates gate combnations
+def gate_gen():
     all_gates = []
-    for terminal in terms:
-        for gate in gs:
-            all_gates.append(terminal+gate)
+    for terminal in terminals:
+        for gate in gates:
+            all_gates.append(terminal+gate)   
+    return(all_gates)
+all_gates = gate_gen()
+#Function that generates a random schedule and returns it sorted by departure times
+def generate_schedule(flights, airls, dests, caps, gs):  
     schedule = []
-    
     for i in range(len(flights)):
         hour = randint(0,23)
-        minute = randint(0,60)
+        minute = randint(0,59)
         cancelation = False
-        if randint(0,100) >= 90:
-            cancelation = True
         delay = 0
         if randint(0,100) >= 80:
             delay = randint(0,70)
-        gate = all_gates[i]
-        if randint(0,100) >= 90:
-            gate = "Gate not assigned"
-
         temp = {
             "Flight Number" : flights[i],
             "Airline" : airls[i],
             "Destination" : dests[i],
             "Departure Time" : f"{hour:02d}:{minute:02d}",
-            "Gate" : gate,
+            "Gate" : gs[i],
             "Passengers" : randint(0, caps[i]),
             "Maximum Capacity" : caps[i],
             "Delay" : delay,
             "Cancelation Status" : cancelation
         }
         schedule.append(temp)
+    schedule[randint(0,len(schedule)-1)]["Cancelation Status"] = True
+    schedule[randint(0,len(schedule)-1)]["Gate"] = "Gate not assigned"
+    schedule[randint(0,len(schedule)-1)]["Passengers"] = 0
+
     return sorted(schedule, key=lambda x: x["Departure Time"])
-new_schedule = generate_schedule(fl_num,airlines,cities,capacities,terminals,gates)
+new_schedule = generate_schedule(fl_num,airlines,cities,capacities,all_gates)
 
 pprint.pprint(new_schedule, indent=4, width=60)
 print("Welcome to Flight Control!")
@@ -75,12 +76,12 @@ while active == True:
                 if schedule['Cancelation Status']:
                     print(schedule['Flight Number'] + " - " + schedule['Destination'] + " - " + schedule['Departure Time'] + " - " + schedule['Gate'] + " - CANCELLED")
         case 4:
-            flight = input("Type the flight number you wish to search for:").upper()
-            if any(s.get("Flight Number") == flight for s in new_schedule):
-                for schedule in new_schedule:
-                    if schedule['Flight Number'] == flight:
-                        print(schedule['Flight Number'] + " - " + schedule['Destination'] + " - " + schedule['Departure Time'] + " - " + schedule['Gate'])
-                        break
+            flight = input("Type the flight number you wish to search for:").strip().upper()
+            
+            for schedule in new_schedule:
+                if schedule['Flight Number'] == flight:
+                    print(schedule['Flight Number'] + " - " + schedule['Destination'] + " - " + schedule['Departure Time'] + " - " + schedule['Gate'])
+                    break
             else:
                 print("Flight not found!")
         case 5:
@@ -111,7 +112,8 @@ while active == True:
             Passengers today: {stats[4]},
             Average number of passengers per flight: {stats[4]/stats[5]},
             Busiest flight: {stats[6]} - {stats[7]} passengers,
-            Number of flights with more than 80% of their capacity filled: {stats[8]}
+            Number of flights with more than 80% of their capacity filled: {stats[8]},
+            Active Gates: {all_gates}
             """)            
         case 6:
             break
